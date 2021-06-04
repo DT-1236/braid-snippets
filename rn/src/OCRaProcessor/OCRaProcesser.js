@@ -1,5 +1,5 @@
 /** @flow */
-
+import luhn from "luhn";
 import getNumberSamples from "./getNumberSamples";
 import {
   PAN_COORDINATES,
@@ -47,7 +47,11 @@ function recognizeNumber(coordinates, redPixelData: number[]) {
 }
 
 function getPan(redPixelData: number[]) {
-  return recognizeNumber(PAN_COORDINATES, redPixelData);
+  const pan = recognizeNumber(PAN_COORDINATES, redPixelData);
+  if (!luhn.validate(pan)) {
+    throw new Error("Invalid PAN");
+  }
+  return pan;
 }
 
 function getMonth(redPixelData: number[]) {
