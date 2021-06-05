@@ -8,7 +8,7 @@ import {
   CVV_COORDINATES,
 } from "./ocrConfig";
 import expectedNumberSignatures from "./expectedNumberSignatures";
-// import interpretUnexpectedNumberSamples from "./interpretUnexpectedNumberSamples";
+import interpretUnexpectedNumberSamples from "./fallbackBehavior/interpretUnexpectedNumberSamples";
 import { redPixelDataFromUrl } from "./jpegProcessor";
 
 /**
@@ -39,9 +39,7 @@ function recognizeNumber(coordinates, redPixelData: number[]) {
     if (typeof memo === "number") {
       return acc + memo;
     }
-    // TODO(em) this will be removed as soon as the fallback behavior is merged in
-    throw new Error("Unexpected number signature");
-    // return acc + interpretUnexpectedNumberSamples(rows, coordKey) ?? "";
+    return acc + interpretUnexpectedNumberSamples(rows, coordKey) ?? "";
   },
   "");
 }
@@ -49,7 +47,7 @@ function recognizeNumber(coordinates, redPixelData: number[]) {
 function getPan(redPixelData: number[]) {
   const pan = recognizeNumber(PAN_COORDINATES, redPixelData);
   if (!luhn.validate(pan)) {
-    throw new Error("Invalid PAN");
+    throw new Error(`Resulted in an invalid PAN: ${printPan(pan)}`);
   }
   return pan;
 }
