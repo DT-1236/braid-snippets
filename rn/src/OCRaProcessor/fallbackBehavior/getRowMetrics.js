@@ -1,6 +1,7 @@
 /** @flow */
 
 import { MINIMUM_ROW_SIGNAL, type Signal, POSITIVE_SIGNAL } from "../ocrConfig";
+import { LowSignalError } from "./errors";
 
 const ROW_LEFT_INDEX = 6;
 const ROW_RIGHT_INDEX = 9;
@@ -28,7 +29,7 @@ export default function getRowMetrics(row: Signal[]) {
   }
 
   if (totalSignal < MINIMUM_ROW_SIGNAL) {
-    throw new Error(`Signal for row was unexpectedly low: ${totalSignal}`);
+    throw new LowSignalError(row, totalSignal);
   }
   return [left, middle, right, totalSignal];
 }

@@ -1,0 +1,24 @@
+/** @flow */
+
+export const MIDDLE_ROW_RESULTS = {
+  LEFT: "LEFT",
+  RIGHT: "RIGHT",
+  MIDDLE: "MIDDLE",
+  LEFT_AND_RIGHT: "LEFT_AND_RIGHT",
+  EIGHT: "EIGHT",
+};
+
+export const LOW_ROW_RESULTS = {
+  LEFT: "LEFT",
+  RIGHT: "RIGHT",
+  MIDDLE: "MIDDLE",
+  LEFT_AND_RIGHT: "LEFT_AND_RIGHT",
+  MIDDLE_AND_RIGHT: "MIDDLE_AND_RIGHT",
+  WIDE: "WIDE",
+};
+
+export const TOP_ROW_RESULTS = {
+  THIN: "THIN",
+  WIDE: "WIDE",
+  MEDIUM: "MEDIUM",
+};

@@ -2,20 +2,14 @@
 
 import getRowMetrics from "./getRowMetrics";
 import { MINIMUM_ROW_SIGNAL, type Signal } from "../ocrConfig";
+import { LowSignalError, UnclassifiedSignalError } from "./errors";
+import { LOW_ROW_RESULTS } from "./rowResults";
 
-export const LOW_ROW_RESULTS = {
-  LEFT: "LEFT",
-  RIGHT: "RIGHT",
-  MIDDLE: "MIDDLE",
-  LEFT_AND_RIGHT: "LEFT_AND_RIGHT",
-  MIDDLE_AND_RIGHT: "MIDDLE_AND_RIGHT",
-  WIDE: "WIDE",
-};
 export default function analyzeLow(row: Signal[]) {
-  const [left, middle, right, total] = getRowMetrics(row);
+  const [left, middle, right, totalSignal] = getRowMetrics(row);
 
-  if (total < MINIMUM_ROW_SIGNAL) {
-    throw new Error(`Signal for middle row was unexpectedly low: ${total}`);
+  if (totalSignal < MINIMUM_ROW_SIGNAL) {
+    throw new LowSignalError(row, totalSignal);
   }
   if (left && middle && right) {
     return LOW_ROW_RESULTS.WIDE;
@@ -37,7 +31,5 @@ export default function analyzeLow(row: Signal[]) {
     return LOW_ROW_RESULTS.MIDDLE;
   }
 
-  throw new Error(
-    `Somehow minimum signal was met for low row evaluation, but results were inconclusive`
-  );
+  throw new UnclassifiedSignalError(row);
 }

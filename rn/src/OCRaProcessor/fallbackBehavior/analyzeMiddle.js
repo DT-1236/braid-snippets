@@ -1,13 +1,12 @@
 /** @flow */
 import getRowMetrics from "./getRowMetrics";
 import { type Signal, POSITIVE_SIGNAL } from "../ocrConfig";
-export const MIDDLE_ROW_RESULTS = {
-  LEFT: "LEFT",
-  RIGHT: "RIGHT",
-  MIDDLE: "MIDDLE",
-  LEFT_AND_RIGHT: "LEFT_AND_RIGHT",
-  EIGHT: "EIGHT",
-};
+import {
+  InconclusiveMiddleRowEvaluationError,
+  MiddleRowHighSignalError,
+  UnclassifiedSignalError,
+} from "./errors";
+import { MIDDLE_ROW_RESULTS } from "./rowResults";
 
 const MIDDLE_MAX_EIGHT_OFFSET = 5;
 function checkForMiddleEightPattern(middleRow) {
@@ -43,20 +42,16 @@ export default function analyzeMiddle(row: Signal[]) {
   const [left, middle, right, total] = getRowMetrics(row);
 
   if (total > MIDDLE_MAXIMUM_SIGNAL) {
-    throw new Error(
-      `Signal for middle row was unexpectedly high: ${total}\n${row.toString()}`
-    );
+    throw new MiddleRowHighSignalError(row, total);
   }
 
   if (middle) {
     if (left && !right && total < 4) {
-      // a 5 shifted to the right can register as middle
+      // a 5 shifted to the right can register as having a middle signal pattern distribution
       return MIDDLE_ROW_RESULTS.LEFT;
     }
     if (left || right) {
-      throw new Error(
-        `Unexpected results for middle row evaluation\nLeft: ${left.toString()}\nMiddle: ${middle.toString()}\nRight: ${right.toString()}`
-      );
+      throw new InconclusiveMiddleRowEvaluationError(row, left, middle, right);
     }
     return MIDDLE_ROW_RESULTS.MIDDLE;
   }
@@ -70,7 +65,5 @@ export default function analyzeMiddle(row: Signal[]) {
   if (right) {
     return MIDDLE_ROW_RESULTS.RIGHT;
   }
-  throw new Error(
-    `Somehow minimum signal was met for middle row evaluation, but results were inconclusive`
-  );
+  throw new UnclassifiedSignalError(row);
 }
