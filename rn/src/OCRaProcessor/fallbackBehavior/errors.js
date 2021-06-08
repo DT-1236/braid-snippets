@@ -24,9 +24,9 @@ export function logNewSignature(
   console.log(
     `Encountered an unexpected number signature:\n${signatureRepr}\n` +
       `was interpreted as: ${result} with an offset of ${offset}` +
-      interpretationFailures.length
-      ? `\nFailed interpretations:${interpretationFailures.toString()}`
-      : ""
+      (interpretationFailures.length
+        ? `\nFailed interpretations:${interpretationFailures.toString()}`
+        : "")
   );
 }
 
