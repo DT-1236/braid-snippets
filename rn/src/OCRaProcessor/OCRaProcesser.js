@@ -12,10 +12,11 @@ import expectedNumberSignatures from "./expectedNumberSignatures";
 import interpretUnexpectedNumberSamples from "./fallbackBehavior/interpretUnexpectedNumberSamples";
 import { redPixelDataFromUrl } from "./jpegProcessor";
 import {
-  FailedInterpretation,
   FailedInterpretationError,
   InvalidNumberSampleError,
+  InvalidPanError,
   NewSignatureException,
+  SequenceRecognitionError,
   SignatureInterpretationError,
 } from "./fallbackBehavior/errors";
 
@@ -27,37 +28,41 @@ import {
  * nunbers). The samples are then evaluated to determine the numbers they represent.
  */
 export async function getPanExpAndCvv(url: string, cardId: string) {
-  try {
-    const redPixelData = await redPixelDataFromUrl(url);
-    const [expMonth, monthHasNewSignature] = getMonth(redPixelData);
-    const [expYear, yearHasNewSignature] = getYear(redPixelData);
-    const [cvv, cvvHasNewSignature] = getCvv(redPixelData);
-    const [pan, panHasNewSignature] = getPan(redPixelData);
+  const redPixelData = await redPixelDataFromUrl(url);
+  const [expMonth, monthHasNewSignature, monthError] = getMonth(redPixelData);
+  const [expYear, yearHasNewSignature, yearError] = getYear(redPixelData);
+  const [cvv, cvvHasNewSignature, cvvError] = getCvv(redPixelData);
+  const [pan, panHasNewSignature, panError] = getPan(redPixelData);
 
-    const newSignatureSeen = [
-      monthHasNewSignature,
-      yearHasNewSignature,
-      cvvHasNewSignature,
-      panHasNewSignature,
-    ].some((b) => b);
+  const newSignatureSeen = [
+    monthHasNewSignature,
+    yearHasNewSignature,
+    cvvHasNewSignature,
+    panHasNewSignature,
+  ].some((b) => b);
 
-    if (newSignatureSeen) {
-      Bugsnag.notify(new NewSignatureException(cardId));
-    }
-
-    return {
-      expMonth,
-      expYear,
-      cvv,
-      pan,
-    };
-  } catch (ex) {
-    Bugsnag.notify(new FailedInterpretationError(cardId, ex));
+  if (newSignatureSeen) {
+    Bugsnag.notify(new NewSignatureException(cardId));
   }
+
+  const errors = [monthError, yearError, cvvError, panError].filter((e) => e);
+  if (errors.length) {
+    // ex.interpretationErrors should have results and locations of signature interpretation errors
+    // ex.samplingErrors should have locations and samples of nunmber sampling errors
+    throw new FailedInterpretationError(cardId, errors);
+  }
+
+  return {
+    expMonth,
+    expYear,
+    cvv,
+    pan,
+  };
 }
 
 function recognizeSequence(coordinates, redPixelData: number[]) {
-  const failedInterpretations = [];
+  const interpretationErrors = [];
+  const samplingErrors = [];
   let newSignature = false;
   const sequence = coordinates.reduce(function recognizeNumberReducer(
     acc,
@@ -76,11 +81,13 @@ function recognizeSequence(coordinates, redPixelData: number[]) {
       result = interpretUnexpectedNumberSamples(rows, coordKey);
     } catch (ex) {
       if (ex instanceof SignatureInterpretationError) {
-        failedInterpretations.push(
-          new FailedInterpretation(coordKey, rows, ex)
-        );
+        ex.coordinateKey = coordKey;
+        ex.samples = rows;
+        interpretationErrors.push(ex);
       } else if (ex instanceof InvalidNumberSampleError) {
-        throw ex;
+        ex.coordinateKey = coordKey;
+        ex.samples = rows;
+        samplingErrors.push(ex);
       } else {
         throw ex;
       }
@@ -89,18 +96,23 @@ function recognizeSequence(coordinates, redPixelData: number[]) {
     return acc + result;
   },
   "");
-  return [sequence, newSignature];
+
+  const error =
+    interpretationErrors.length || samplingErrors.length
+      ? new SequenceRecognitionError(interpretationErrors, samplingErrors)
+      : null;
+  return [sequence, newSignature, error];
 }
 
 function getPan(redPixelData: number[]) {
-  const [pan, panHasNewSignature] = recognizeSequence(
+  let [pan, panHasNewSignature, panError] = recognizeSequence(
     PAN_COORDINATES,
     redPixelData
   );
   if (!luhn.validate(pan)) {
-    throw new Error(`Resulted in an invalid PAN: ${printPan(pan)}`);
+    panError = new InvalidPanError(printPan(pan));
   }
-  return [pan, panHasNewSignature];
+  return [pan, panHasNewSignature, panError];
 }
 
 function getMonth(redPixelData: number[]) {

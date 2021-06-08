@@ -11,6 +11,7 @@ import {
 import { type NumberSamples, type CoordinateKey } from "../ocrConfig";
 import shiftNumberSample from "../shiftNumberSample";
 import {
+  InvalidNumberSampleError,
   logNewSignature,
   SignatureInterpretationError,
   SignatureInterpretationException,
@@ -27,7 +28,7 @@ export default function interpretUnexpectedNumberSamples(
   rows: NumberSamples,
   coordKey: CoordinateKey
 ): number {
-  const interpretationFailures = [];
+  const interpretationExceptions = [];
   for (let offset = 0; offset < 3; offset++) {
     try {
       const result = interpretNumberSamples(rows, offset);
@@ -35,20 +36,26 @@ export default function interpretUnexpectedNumberSamples(
         signatureRepr(rows),
         result,
         offset,
-        interpretationFailures
+        interpretationExceptions
       );
       return result;
     } catch (ex) {
       if (ex instanceof SignatureInterpretationException) {
-        interpretationFailures.push(ex);
+        ex.offset = offset;
+        interpretationExceptions.push(ex);
+      } else if (ex instanceof InvalidNumberSampleError) {
+        throw ex;
       } else {
-        // Entirely unexpected and should be handled by top-level bugsnag
         throw ex;
       }
     }
   }
 
-  throw new SignatureInterpretationError(interpretationFailures);
+  throw new SignatureInterpretationError(
+    interpretationExceptions,
+    rows,
+    coordKey
+  );
 }
 
 function interpretNumberSamples(rows, offset = 0) {
