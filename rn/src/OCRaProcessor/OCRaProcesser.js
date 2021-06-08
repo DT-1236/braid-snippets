@@ -49,7 +49,9 @@ export async function getPanExpAndCvv(url: string, cardId: string) {
   if (errors.length) {
     // ex.interpretationErrors should have results and locations of signature interpretation errors
     // ex.samplingErrors should have locations and samples of nunmber sampling errors
-    throw new FailedInterpretationError(cardId, errors);
+    const aggregateError = new FailedInterpretationError(cardId, errors);
+    Bugsnag.notify(aggregateError);
+    throw aggregateError;
   }
 
   return {
@@ -109,7 +111,7 @@ function getPan(redPixelData: number[]) {
     PAN_COORDINATES,
     redPixelData
   );
-  if (!luhn.validate(pan)) {
+  if (!panError && !luhn.validate(pan)) {
     panError = new InvalidPanError(printPan(pan));
   }
   return [pan, panHasNewSignature, panError];
