@@ -39,3 +39,7 @@ export default function getNumberSamples(
     getNumberRow(thirdStart, redPixelData),
   ];
 }
+
+export function signatureRepr(rows: NumberSamples) {
+  return rows.map((r) => r.join("")).join("\n");
+}
