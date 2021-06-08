@@ -42,10 +42,17 @@ export class InvalidPanError extends OcrError {
 }
 
 export class NewSignatureException extends OcrException {
-  constructor(cardId: string) {
-    super(
-      `New number signature(s) successfully interpreted for cardId: ${cardId}.`
-    );
+  groupingHash: string;
+  constructor(cardId: string, value: number, signature: string) {
+    const groupingHash =
+      "CardOcr" +
+      "NewSignature - " +
+      "Value: " +
+      value +
+      " Signature: " +
+      signature;
+    super(`${groupingHash} cardId: ${cardId}`);
+    this.groupingHash = groupingHash;
   }
 }
 

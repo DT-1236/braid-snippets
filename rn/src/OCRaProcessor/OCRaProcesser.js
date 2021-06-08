@@ -29,20 +29,31 @@ import {
  */
 export async function getPanExpAndCvv(url: string, cardId: string) {
   const redPixelData = await redPixelDataFromUrl(url);
-  const [expMonth, monthHasNewSignature, monthError] = getMonth(redPixelData);
-  const [expYear, yearHasNewSignature, yearError] = getYear(redPixelData);
-  const [cvv, cvvHasNewSignature, cvvError] = getCvv(redPixelData);
-  const [pan, panHasNewSignature, panError] = getPan(redPixelData);
+  const [expMonth, newMonthSignatures, monthError] = getMonth(redPixelData);
+  const [expYear, newYearSignatures, yearError] = getYear(redPixelData);
+  const [cvv, newCvvSignatures, cvvError] = getCvv(redPixelData);
+  const [pan, newPanSignatures, panError] = getPan(redPixelData);
 
-  const newSignatureSeen = [
-    monthHasNewSignature,
-    yearHasNewSignature,
-    cvvHasNewSignature,
-    panHasNewSignature,
-  ].some((b) => b);
+  const newSignatures = newMonthSignatures
+    .concat(newYearSignatures)
+    .concat(newCvvSignatures)
+    .concat(newPanSignatures);
 
-  if (newSignatureSeen) {
-    Bugsnag.notify(new NewSignatureException(cardId));
+  if (newSignatures.length) {
+    // Fallback behavior was used, and a new signature should be added to expectedNumberSignatures
+    newSignatures.forEach(({ value, signature }) => {
+      const newSignatureException = new NewSignatureException(
+        cardId,
+        value,
+        signature
+      );
+      Bugsnag.notify(newSignatureException, (report) => {
+        // The grouping has should have Bugsnag group all new Signature-Value exceptions.
+        // After adding the signatures to the expected list, the exceptions
+        // should be snoozed until the next release.
+        report.groupingHash = newSignatureException.groupingHash;
+      });
+    });
   }
 
   const errors = [monthError, yearError, cvvError, panError].filter((e) => e);
@@ -65,7 +76,7 @@ export async function getPanExpAndCvv(url: string, cardId: string) {
 function recognizeSequence(coordinates, redPixelData: number[]) {
   const interpretationErrors = [];
   const samplingErrors = [];
-  let newSignature = false;
+  const newSignatures = [];
   const sequence = coordinates.reduce(function recognizeNumberReducer(
     acc,
     [x, y, coordKey]
@@ -76,11 +87,11 @@ function recognizeSequence(coordinates, redPixelData: number[]) {
     if (typeof memo === "number") {
       return acc + memo;
     }
-    newSignature = true;
 
-    let result = "";
+    let value = "";
     try {
-      result = interpretUnexpectedNumberSamples(rows, coordKey);
+      value = interpretUnexpectedNumberSamples(rows, coordKey);
+      newSignatures.push({ signature, value });
     } catch (ex) {
       if (ex instanceof SignatureInterpretationError) {
         ex.coordinateKey = coordKey;
@@ -95,7 +106,7 @@ function recognizeSequence(coordinates, redPixelData: number[]) {
       }
     }
 
-    return acc + result;
+    return acc + value;
   },
   "");
 
@@ -103,7 +114,7 @@ function recognizeSequence(coordinates, redPixelData: number[]) {
     interpretationErrors.length || samplingErrors.length
       ? new SequenceRecognitionError(interpretationErrors, samplingErrors)
       : null;
-  return [sequence, newSignature, error];
+  return [sequence, newSignatures, error];
 }
 
 function getPan(redPixelData: number[]) {
