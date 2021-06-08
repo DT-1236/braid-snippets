@@ -10,7 +10,7 @@ import {
 } from "./ocrConfig";
 import expectedNumberSignatures from "./expectedNumberSignatures";
 import interpretUnexpectedNumberSamples from "./fallbackBehavior/interpretUnexpectedNumberSamples";
-import { redPixelDataFromPath, redPixelDataFromUrl } from "./jpegProcessor";
+import { redPixelDataFromUrl } from "./jpegProcessor";
 import {
   FailedInterpretation,
   FailedInterpretationError,
@@ -54,16 +54,6 @@ export async function getPanExpAndCvv(url: string, cardId: string) {
   } catch (ex) {
     Bugsnag.notify(new FailedInterpretationError(cardId, ex));
   }
-}
-
-export async function getPanExpAndCvvFromPath(path: string) {
-  const redPixelData = await redPixelDataFromPath(path);
-  return {
-    expMonth: getMonth(redPixelData),
-    expYear: getYear(redPixelData),
-    cvv: getCvv(redPixelData),
-    pan: getPan(redPixelData),
-  };
 }
 
 function recognizeSequence(coordinates, redPixelData: number[]) {

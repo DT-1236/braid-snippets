@@ -2,7 +2,6 @@
 import RNFetchBlob from "rn-fetch-blob";
 import { Buffer } from "buffer";
 import jpeg from "jpeg-js";
-import fs from "fs";
 
 async function getEncodedImageFromUrl(url) {
   const response = await RNFetchBlob.config({ fileCache: true }).fetch(
@@ -21,11 +20,5 @@ export function filterRedPixelData(jpegData: any) {
 export async function redPixelDataFromUrl(url: string) {
   const base64 = await getEncodedImageFromUrl(url);
   const jpegBuffer = Buffer.from(base64, "base64");
-  return filterRedPixelData(jpeg.decode(jpegBuffer));
-}
-
-export function redPixelDataFromPath(path: string) {
-  const buffer = fs.readFileSync(process.cwd() + path, "base64");
-  const jpegBuffer = Buffer.from(buffer, "base64");
   return filterRedPixelData(jpeg.decode(jpegBuffer));
 }
