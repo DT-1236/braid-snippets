@@ -1,11 +1,21 @@
 /** @flow */
 
-import analyzeMiddle, { MIDDLE_ROW_RESULTS } from "./analyzeMiddle";
-import analyzeLow, { LOW_ROW_RESULTS } from "./analyzeLow";
-import analyzeTop, { TOP_ROW_RESULTS } from "./analyzeTop";
+import analyzeMiddle from "./analyzeMiddle";
+import analyzeLow from "./analyzeLow";
+import analyzeTop from "./analyzeTop";
+import {
+  MIDDLE_ROW_RESULTS,
+  LOW_ROW_RESULTS,
+  TOP_ROW_RESULTS,
+} from "./rowResults";
 import { type NumberSamples, type CoordinateKey } from "../ocrConfig";
-import Bugsnag from "../../Bugsnag";
 import shiftNumberSample from "../shiftNumberSample";
+import {
+  logNewSignature,
+  SignatureInterpretationError,
+  SignatureInterpretationException,
+} from "./errors";
+import { signatureRepr } from "../getNumberSamples";
 
 /**
  * This should rarely, if ever, be used. It will attempt to evaluate
@@ -17,26 +27,28 @@ export default function interpretUnexpectedNumberSamples(
   rows: NumberSamples,
   coordKey: CoordinateKey
 ): number {
-  const errors = [];
-  const signatureRepr = rows.map((r) => r.join("")).join("\n");
+  const interpretationFailures = [];
   for (let offset = 0; offset < 3; offset++) {
     try {
       const result = interpretNumberSamples(rows, offset);
-      const bugSnagMsg =
-        `Encountered an unexpected number signature:\n${signatureRepr}\nwas interpreted as: ${result} with an offset of ${offset}` +
-        errors.length
-          ? `\nFailed interpretations:${errors.toString()}`
-          : "";
-      Bugsnag.notify(new Error(bugSnagMsg));
+      logNewSignature(
+        signatureRepr(rows),
+        result,
+        offset,
+        interpretationFailures
+      );
       return result;
     } catch (ex) {
-      errors.push(ex);
+      if (ex instanceof SignatureInterpretationException) {
+        interpretationFailures.push(ex);
+      } else {
+        // Entirely unexpected and should be handled by top-level bugsnag
+        throw ex;
+      }
     }
   }
 
-  throw new Error(
-    `Unable to interpret number signature at ${coordKey}\n${signatureRepr}\nInterpretation results:${errors.toString()}`
-  );
+  throw new SignatureInterpretationError(interpretationFailures);
 }
 
 function interpretNumberSamples(rows, offset = 0) {
@@ -46,8 +58,8 @@ function interpretNumberSamples(rows, offset = 0) {
   if (low === LOW_ROW_RESULTS.WIDE) {
     // expect 6. Only a 6 can be this wide at this level, though the sampled low row may also result in left/right
     if (top !== TOP_ROW_RESULTS.THIN || mid !== MIDDLE_ROW_RESULTS.LEFT) {
-      throw new Error(
-        `Results inconclusive. Low result anticipates 6, however Top: ${top}, Middle: ${mid}`
+      throw new SignatureInterpretationException(
+        `Low result anticipates 6, however Top: ${top}, Middle: ${mid}`
       );
     }
     return 6;
@@ -56,8 +68,8 @@ function interpretNumberSamples(rows, offset = 0) {
   if (low === LOW_ROW_RESULTS.MIDDLE_AND_RIGHT) {
     // expect 1
     if (top !== TOP_ROW_RESULTS.MEDIUM || mid !== MIDDLE_ROW_RESULTS.MIDDLE) {
-      throw new Error(
-        `Results inconclusive. Low result anticipates 1, however Top: ${top}, Middle: ${mid}`
+      throw new SignatureInterpretationException(
+        `Low result anticipates 1, however Top: ${top}, Middle: ${mid}`
       );
     }
     return 1;
@@ -66,8 +78,8 @@ function interpretNumberSamples(rows, offset = 0) {
   if (low === LOW_ROW_RESULTS.MIDDLE) {
     // expect 7
     if (top !== TOP_ROW_RESULTS.WIDE || mid !== MIDDLE_ROW_RESULTS.RIGHT) {
-      throw new Error(
-        `Results inconclusive. Low result anticipates 7, however Top: ${top}, Middle: ${mid}`
+      throw new SignatureInterpretationException(
+        `Low result anticipates 7, however Top: ${top}, Middle: ${mid}`
       );
     }
     return 7;
@@ -76,8 +88,8 @@ function interpretNumberSamples(rows, offset = 0) {
   if (low === LOW_ROW_RESULTS.LEFT) {
     // expect 2
     if (top !== TOP_ROW_RESULTS.WIDE || mid !== MIDDLE_ROW_RESULTS.RIGHT) {
-      throw new Error(
-        `Results inconclusive. Low result anticipates 2, however Top: ${top}, Middle: ${mid}`
+      throw new SignatureInterpretationException(
+        `Low result anticipates 2, however Top: ${top}, Middle: ${mid}`
       );
     }
     return 2;
@@ -87,8 +99,8 @@ function interpretNumberSamples(rows, offset = 0) {
     // expect 6, 8, or 0
     if (top === TOP_ROW_RESULTS.MEDIUM) {
       if (mid !== MIDDLE_ROW_RESULTS.EIGHT) {
-        throw new Error(
-          `Results inconclusive. Low/Top result anticipates 8, however, Middle: ${mid}`
+        throw new SignatureInterpretationException(
+          `Low/Top result anticipates 8, however, Middle: ${mid}`
         );
       }
       return 8;
@@ -96,8 +108,8 @@ function interpretNumberSamples(rows, offset = 0) {
     if (mid === MIDDLE_ROW_RESULTS.LEFT) {
       // Only 6 has only a left signal in the middle
       if (top !== TOP_ROW_RESULTS.THIN) {
-        throw new Error(
-          `Results inconclusive. Low/Mid result anticipates 6, however, Top: ${top}`
+        throw new SignatureInterpretationException(
+          `Low/Mid result anticipates 6, however, Top: ${top}`
         );
       }
       return 6;
@@ -106,8 +118,8 @@ function interpretNumberSamples(rows, offset = 0) {
       top !== TOP_ROW_RESULTS.WIDE ||
       mid !== MIDDLE_ROW_RESULTS.LEFT_AND_RIGHT
     ) {
-      throw new Error(
-        `Results inconclusive. Low result of ${low} suggests 6/8/0 and 6 and 8 have been excluded. Expected 0, however Top: ${top}, Middle: ${mid}`
+      throw new SignatureInterpretationException(
+        `Low result of ${low} suggests 6/8/0 and 6 and 8 have been excluded. Expected 0, however Top: ${top}, Middle: ${mid}`
       );
     }
     return 0;
@@ -118,8 +130,8 @@ function interpretNumberSamples(rows, offset = 0) {
     if (mid === MIDDLE_ROW_RESULTS.RIGHT) {
       // expect 3
       if (top !== TOP_ROW_RESULTS.WIDE) {
-        throw new Error(
-          `Results inconclusive. Low: ${low}, Mid: ${mid} suggests 3, but Top: ${top}`
+        throw new SignatureInterpretationException(
+          `Low: ${low}, Mid: ${mid} suggests 3, but Top: ${top}`
         );
       }
       return 3;
@@ -127,8 +139,8 @@ function interpretNumberSamples(rows, offset = 0) {
     if (mid === MIDDLE_ROW_RESULTS.LEFT) {
       // expect 5
       if (top !== TOP_ROW_RESULTS.WIDE) {
-        throw new Error(
-          `Results inconclusive. Low: ${low}, Mid: ${mid} suggests 5, but Top: ${top}`
+        throw new SignatureInterpretationException(
+          `Low: ${low}, Mid: ${mid} suggests 5, but Top: ${top}`
         );
       }
       return 5;
@@ -136,22 +148,22 @@ function interpretNumberSamples(rows, offset = 0) {
     if (top === TOP_ROW_RESULTS.THIN) {
       // expect 4
       if (mid !== MIDDLE_ROW_RESULTS.LEFT_AND_RIGHT) {
-        throw new Error(
-          `Results inconclusive. Low: ${low}, Top: ${top} suggests 4, but Mid: ${mid}`
+        throw new SignatureInterpretationException(
+          `Low: ${low}, Top: ${top} suggests 4, but Mid: ${mid}`
         );
       }
       return 4;
     }
     if (top === TOP_ROW_RESULTS.WIDE) {
       if (mid !== MIDDLE_ROW_RESULTS.LEFT_AND_RIGHT) {
-        throw new Error(
-          `Results inconclusive. Low: ${low}, Top: ${top} suggests 9, but Mid: ${mid}`
+        throw new SignatureInterpretationException(
+          `Low: ${low}, Top: ${top} suggests 9, but Mid: ${mid}`
         );
       }
       return 9;
     }
   }
-  throw new Error(
+  throw new SignatureInterpretationException(
     `Results are entirely inconclusive. Low: ${low}, Top: ${top}, Mid: ${mid}`
   );
 }
