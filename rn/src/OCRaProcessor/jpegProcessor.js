@@ -20,5 +20,5 @@ export function filterRedPixelData(jpegData: any) {
 export async function redPixelDataFromUrl(url: string) {
   const base64 = await getEncodedImageFromUrl(url);
   const jpegBuffer = Buffer.from(base64, "base64");
-  return filterRedPixelData(jpeg.decode(jpegBuffer));
+  return filterRedPixelData(jpeg.decode(jpegBuffer, { useTArray: true }));
 }
