@@ -6,8 +6,9 @@ export class OcrError extends Error {}
 export class OcrException extends Error {}
 
 // Indicates the signal in a row is invalid or cannot be evaluated conclusively.
-// This should forego further processing and be sent to Bugsnag along with
-// the card id
+// This can be thrown as the processor shifts its frame to the right in an attempt
+// to interpret the number. If the attempt ultimately fails, it should be sent to
+// Bugsnag along with the rest of the failures of that interpretation attempt.
 export class InvalidNumberSampleError extends OcrError {
   coordinateKey: ?CoordinateKey;
   samples: NumberSamples;
@@ -86,15 +87,18 @@ export class SequenceRecognitionError extends OcrError {
 
 export class SignatureInterpretationError extends OcrError {
   interpretationExceptions: SignatureInterpretationException[];
+  samplingExceptions: InvalidNumberSampleError[];
   coordinateKey: CoordinateKey;
   samples: NumberSamples;
   constructor(
     interpretationExceptions: SignatureInterpretationException[],
+    samplingExceptions: InvalidNumberSampleError[],
     samples: NumberSamples,
     coordinateKey: CoordinateKey
   ) {
     super("OCR processor was unable to interpret a number signature");
     this.interpretationExceptions = interpretationExceptions;
+    this.samplingExceptions = samplingExceptions;
     this.samples = samples;
     this.coordinateKey = this.coordinateKey;
   }
