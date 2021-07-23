@@ -53,18 +53,15 @@ export const numberProfiles = [
   nine,
 ];
 
+export const MAX_OFFSET = 3;
 export default numberProfiles.reduce((acc, signatures, idx) => {
   signatures.forEach((signature) => {
-    const leftMostAlignmentSignature = signature.join("");
-    const middleAlignmentSignature = signature
-      .map((r) => shiftSignature(r, 1))
-      .join("");
-    const rightMostAlignmentSignature = signature
-      .map((r) => shiftSignature(r, 2))
-      .join("");
-    acc[leftMostAlignmentSignature] = idx;
-    acc[middleAlignmentSignature] = idx;
-    acc[rightMostAlignmentSignature] = idx;
+    for (let offset = 0; offset <= MAX_OFFSET; offset++) {
+      const signatureWithOffset = signature
+        .map((r) => shiftSignature(r, offset))
+        .join("");
+      acc[signatureWithOffset] = idx;
+    }
   });
   return acc;
 }, {});
