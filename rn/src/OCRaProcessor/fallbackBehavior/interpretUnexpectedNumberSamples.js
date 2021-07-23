@@ -17,6 +17,7 @@ import {
   SignatureInterpretationException,
 } from "./errors";
 import { signatureRepr } from "../getNumberSamples";
+import { MAX_OFFSET } from "../expectedNumberSignatures";
 
 /**
  * This should rarely, if ever, be used. It will attempt to evaluate
@@ -29,7 +30,8 @@ export default function interpretUnexpectedNumberSamples(
   coordKey: CoordinateKey
 ): number {
   const interpretationExceptions = [];
-  for (let offset = 0; offset < 3; offset++) {
+  const samplingExceptions = [];
+  for (let offset = 0; offset < MAX_OFFSET; offset++) {
     try {
       const result = interpretNumberSamples(rows, offset);
       logNewSignature(
@@ -44,7 +46,7 @@ export default function interpretUnexpectedNumberSamples(
         ex.offset = offset;
         interpretationExceptions.push(ex);
       } else if (ex instanceof InvalidNumberSampleError) {
-        throw ex;
+        samplingExceptions.push(ex);
       } else {
         throw ex;
       }
@@ -53,6 +55,7 @@ export default function interpretUnexpectedNumberSamples(
 
   throw new SignatureInterpretationError(
     interpretationExceptions,
+    samplingExceptions,
     rows,
     coordKey
   );
@@ -143,7 +146,7 @@ function interpretNumberSamples(rows, offset = 0) {
       }
       return 3;
     }
-    if (mid === MIDDLE_ROW_RESULTS.LEFT) {
+    if (mid === MIDDLE_ROW_RESULTS.LEFT || mid === MIDDLE_ROW_RESULTS.MIDDLE) {
       // expect 5
       if (top !== TOP_ROW_RESULTS.WIDE) {
         throw new SignatureInterpretationException(
