@@ -166,6 +166,12 @@ describe("OCRaProcessor: interpretUnexpectedNumberSamples", () => {
         });
       });
     });
+
+    describe("Acceptance Tests", () => {
+      it("recognizes the 16th PAN digit (aka Pan15) when it's a 5", () => {
+        testValues([5], [PAN_COORDINATES[15]], [filenameToTestData("p15-5")]);
+      });
+    });
   });
 
   // It's arguably simplest to test inside of a node/jest environment since our
