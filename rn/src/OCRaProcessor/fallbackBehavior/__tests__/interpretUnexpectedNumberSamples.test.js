@@ -180,50 +180,40 @@ describe("OCRaProcessor: interpretUnexpectedNumberSamples", () => {
   // with a filename that includes the last 8 digits of the PAN.
   // Update the novelFilename variable appropriately as well as
   // the 0's in the expected results to accurate values.
+  // eslint-disable-next-line jest/no-disabled-tests
+  describe.skip("Novel Case", () => {
+    const novelFilename = "novelXXXXXXXXX";
+    const novelTestData = [filenameToTestData(novelFilename)];
+    it("recognizes expiry month", () => {
+      const expectedResults = [0, 0];
+      const coordinates = MONTH_COORDINATES;
+      testValues(expectedResults, coordinates, novelTestData);
+    });
 
-  // describe("Novel Case", () => {
-  //   const novelFilename = "novelXXXXXXXXX";
-  //   const novelTestData = [filenameToTestData(novelFilename)];
-  //   describe("Expiry Month", () => {
-  //     const expectedResults = [0, 0];
-  //     const coordinates = MONTH_COORDINATES;
-  //     it("recognizes novel month", () => {
-  //       testValues(expectedResults, coordinates, novelTestData);
-  //     });
-  //   });
+    it("recognizes expiry year", () => {
+      const expectedResults = [0, 0];
+      const coordinates = YEAR_COORDINATES;
+      testValues(expectedResults, coordinates, novelTestData);
+    });
 
-  //   describe("Expiry Year", () => {
-  //     const expectedResults = [0, 0];
-  //     const coordinates = YEAR_COORDINATES;
-  //     it("recognizes novel year", () => {
-  //       testValues(expectedResults, coordinates, novelTestData);
-  //     });
-  //   });
+    it("recognizes cvv", () => {
+      const expectedResults = [0, 0, 0];
+      const coordinates = CVV_COORDINATES;
+      testValues(expectedResults, coordinates, novelTestData);
+    });
 
-  //   describe("CVV", () => {
-  //     const expectedResults = [0, 0, 0];
-  //     const coordinates = CVV_COORDINATES;
-  //     it("recognizes novel cvv", () => {
-  //       testValues(expectedResults, coordinates, novelTestData);
-  //     });
-  //   });
+    describe("PAN", () => {
+      it("recognizes first 8 of PAN", () => {
+        const expectedResults = [5, 2, 7, 1, 9, 7, 0, 0];
+        const coordinates = PAN_COORDINATES;
+        testValues(expectedResults, coordinates, novelTestData);
+      });
 
-  //   describe("PAN", () => {
-  //     describe("First 8 digits", () => {
-  //       const expectedResults = [5, 2, 7, 1, 9, 7, 0, 0];
-  //       const coordinates = PAN_COORDINATES;
-  //       it("recognizes first 8 of pan for novel card", () => {
-  //         testValues(expectedResults, coordinates, novelTestData);
-  //       });
-  //     });
-
-  //     describe("Last 8 digits in dev", () => {
-  //       const indices = [8, 9, 10, 11, 12, 13, 14, 15];
-  //       const coordinates = PAN_COORDINATES;
-  //       it("recognizes the varying digits of the last 8 PAN in dev", () => {
-  //         testVaryingValues(indices, coordinates, novelTestData);
-  //       });
-  //     });
-  //   });
-  // });
+      it("recognizes the varying digits of the last 8 PAN", () => {
+        const indices = [8, 9, 10, 11, 12, 13, 14, 15];
+        const coordinates = PAN_COORDINATES;
+        testVaryingValues(indices, coordinates, novelTestData);
+      });
+    });
+  });
 });
