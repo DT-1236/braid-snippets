@@ -1,0 +1,12 @@
+# Braid Web Server
+
+A way for us to query the backend and populate the headers for the response appropriately. This allows us to display relevant information for a link's preview.
+
+## Testing
+
+The url to test must have its domain replaced with your `ngrok http 3000` domain. Both `yarn web:dev` and `yarn web:ssr-dev` must be running in addition to your java backend. There should be no need to use ngrok for your java backend
+
+The template for headers is `web/templates/index.ejs`
+
+Twitter cards can be validated at https://cards-dev.twitter.com/validator
+https://metatags.io/ was used as a reference for meta tags
