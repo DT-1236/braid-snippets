@@ -10,7 +10,6 @@ import {
 } from "./ocrConfig";
 import expectedNumberSignatures from "./expectedNumberSignatures";
 import interpretUnexpectedNumberSamples from "./fallbackBehavior/interpretUnexpectedNumberSamples";
-import { redPixelDataFromUrl } from "./jpegProcessor";
 import {
   FailedInterpretationError,
   InvalidNumberSampleError,
@@ -27,8 +26,7 @@ import {
  * Known coordinates are sampled (3 rows taken from 16x16 areas containing important
  * nunbers). The samples are then evaluated to determine the numbers they represent.
  */
-export async function getPanExpAndCvv(url: string, cardId: string) {
-  const redPixelData = await redPixelDataFromUrl(url);
+export function getPanExpAndCvv(redPixelData: number[], cardId: string) {
   const [expMonth, newMonthSignatures, monthError] = getMonth(redPixelData);
   const [expYear, newYearSignatures, yearError] = getYear(redPixelData);
   const [cvv, newCvvSignatures, cvvError] = getCvv(redPixelData);
@@ -117,7 +115,7 @@ function recognizeSequence(coordinates, redPixelData: number[]) {
   return [sequence, newSignatures, error];
 }
 
-function getPan(redPixelData: number[]) {
+export function getPan(redPixelData: number[]) {
   let [pan, panHasNewSignature, panError] = recognizeSequence(
     PAN_COORDINATES,
     redPixelData
