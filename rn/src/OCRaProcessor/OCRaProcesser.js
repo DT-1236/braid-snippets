@@ -45,11 +45,11 @@ export function getPanExpAndCvv(redPixelData: number[], cardId: string) {
         value,
         signature
       );
-      Bugsnag.notify(newSignatureException, (report) => {
+      Bugsnag.notify(newSignatureException, (event) => {
         // The grouping has should have Bugsnag group all new Signature-Value exceptions.
         // After adding the signatures to the expected list, the exceptions
         // should be snoozed until the next release.
-        report.groupingHash = newSignatureException.groupingHash;
+        event.groupingHash = newSignatureException.groupingHash;
       });
     });
   }
