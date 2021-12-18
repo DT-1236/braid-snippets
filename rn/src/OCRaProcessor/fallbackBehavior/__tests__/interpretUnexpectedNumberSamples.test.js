@@ -174,41 +174,53 @@ describe("OCRaProcessor: interpretUnexpectedNumberSamples", () => {
     });
   });
 
-  // It's arguably simplest to test inside of a node/jest environment since our
-  // react native app doesn't have great file system support.
-  // If a card with novel digits is found, save the image to the testing assets directory
-  // with a filename that includes the last 8 digits of the PAN.
-  // Update the novelFilename variable appropriately as well as
-  // the 0's in the expected results to accurate values.
+  // Used in troubleshooting cards for which the OCRa process fails.
   // eslint-disable-next-line jest/no-disabled-tests
   describe.skip("Novel Case", () => {
-    const novelFilename = "novelXXXXXXXXX";
+    // This should be renamed to the filename of the card image in question.
+    // The filename _must_ include the last 8 of the PAN.
+    const novelFilename = "novelXXXXXXXX";
     const novelTestData = [filenameToTestData(novelFilename)];
     it("recognizes expiry month", () => {
-      const expectedResults = [0, 0];
+      // A card image with expiry month of 09 should have `expectedResults = [0, 9]`
+      const expectedResults = [
+        "replaceMeWithActualExpectedValues",
+        "replaceMeWithActualExpectedValues",
+      ];
       const coordinates = MONTH_COORDINATES;
       testValues(expectedResults, coordinates, novelTestData);
     });
 
     it("recognizes expiry year", () => {
-      const expectedResults = [0, 0];
+      // A card image with expiry year of 32 should have `expectedResults = [3, 2]`
+      const expectedResults = [
+        "replaceMeWithActualExpectedValues",
+        "replaceMeWithActualExpectedValues",
+      ];
       const coordinates = YEAR_COORDINATES;
       testValues(expectedResults, coordinates, novelTestData);
     });
 
     it("recognizes cvv", () => {
-      const expectedResults = [0, 0, 0];
+      // A card image with CVV of 343 should have `expectedResults = [3, 4, 3]`
+      const expectedResults = [
+        "replaceMeWithActualExpectedValues",
+        "replaceMeWithActualExpectedValues",
+        "replaceMeWithActualExpectedValues",
+      ];
       const coordinates = CVV_COORDINATES;
       testValues(expectedResults, coordinates, novelTestData);
     });
 
     describe("PAN", () => {
       it("recognizes first 8 of PAN", () => {
+        // These numbers are always the same
         const expectedResults = [5, 2, 7, 1, 9, 7, 0, 0];
         const coordinates = PAN_COORDINATES;
         testValues(expectedResults, coordinates, novelTestData);
       });
 
+      // The last 8 PAN are configured in the filename of the image in question
       it("recognizes the varying digits of the last 8 PAN", () => {
         const indices = [8, 9, 10, 11, 12, 13, 14, 15];
         const coordinates = PAN_COORDINATES;
