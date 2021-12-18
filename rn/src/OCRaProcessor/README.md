@@ -51,3 +51,5 @@ I'd expect this to only be necessary if the font was changed from OCRa. It _may_
 ### Add an acceptance test
 
 This will require a new test asset be added. The filename can be whatever you choose, but it must redact all but one number. If the buggy image has multiple values that were addressed, create a new test image for each value (_eg_ - If a test image unveiled problems with PAN 6 and CVV 2, then two images must be created, one where all numbers except PAN 6 are redacted, and another where all numbers except CVV 2 are redacted).
+
+It's also probably a good idea to comment when the bug was resolved so you can reference whether or not an old client is throwing a fixed issue.
