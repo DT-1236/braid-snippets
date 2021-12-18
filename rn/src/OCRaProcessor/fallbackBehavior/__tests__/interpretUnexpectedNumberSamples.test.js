@@ -171,6 +171,10 @@ describe("OCRaProcessor: interpretUnexpectedNumberSamples", () => {
       it("recognizes the 16th PAN digit (aka Pan15) when it's a 5", () => {
         testValues([5], [PAN_COORDINATES[15]], [filenameToTestData("p15-5")]);
       });
+
+      // it("recognizes the XXth PAN digit when ...", () => {
+      //   testValues([Y], [PAN_COORDINATES[XX]], [filenameToTestData("someHelpfulFilename")]);
+      // });
     });
   });
 
