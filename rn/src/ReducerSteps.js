@@ -1,43 +1,16 @@
 /** @flow */
 
-type StateWithSteps<Step, State> = { ...State, currentStep: Step };
+export type StateWithSteps<Step, State> = { ...State, currentStep: Step };
 
 type StepConfig<Step, State> = {
   nextStep: Step,
-  previousStep: null | Step,
-  skipWhen: (StateWithSteps<Step, State>) => boolean,
+  previousStep?: Step,
+  skipWhen?: (StateWithSteps<Step, State>) => boolean,
 };
-
-type NextStep<Step, State> = $PropertyType<StepConfig<Step, State>, "nextStep">;
-type PreviousStep<Step, State> = $PropertyType<
-  StepConfig<Step, State>,
-  "previousStep"
->;
-type SkipCriteria<Step, State> = $PropertyType<
-  StepConfig<Step, State>,
-  "skipWhen"
->;
 
 type StepsConfig<Step, State> = {
   [Step]: StepConfig<Step, State>,
 };
-
-/**
- * A convenience method that configures a step. It will add default `null` value for the previous step
- * and a default skip criterion that never skips the step.
- *
- * @param {*} nextStep The next step following this one.
- * @param {*} previousStep The previous step before this one. Defaults to null.
- * @param {*} skipWhen Accepts a state object and returns a boolean indicating whether this step should be skipped.
- * @returns
- */
-export function nextStepPreviousStepSkipWhen<Step, State>(
-  nextStep: NextStep<Step, State>,
-  previousStep: PreviousStep<Step, State> = null,
-  skipWhen: SkipCriteria<Step, State> = () => false
-): StepConfig<Step, State> {
-  return { nextStep, previousStep, skipWhen };
-}
 
 function getNextStep<Step, State>(
   state: StateWithSteps<Step, State>,
@@ -50,7 +23,7 @@ function getNextStep<Step, State>(
   }
   const nextStep = stepConfig.nextStep;
   const nextStepConfig = config[nextStep];
-  if (nextStepConfig.skipWhen(state)) {
+  if (nextStepConfig.skipWhen?.(state)) {
     return getNextStep(state, nextStep, config);
   }
 
@@ -63,7 +36,7 @@ function getPreviousStep<Step, State>(
   config: StepsConfig<Step, State>
 ): Step | null {
   if (!step) {
-    return step;
+    return null;
   }
 
   const currentStepConfig = config[step];
@@ -73,10 +46,10 @@ function getPreviousStep<Step, State>(
 
   const previousStep = currentStepConfig.previousStep;
   if (!previousStep) {
-    return previousStep;
+    return null;
   }
   const previousStepConfig = config[previousStep];
-  if (previousStepConfig.skipWhen(state)) {
+  if (previousStepConfig.skipWhen?.(state)) {
     return getPreviousStep(state, previousStepConfig.previousStep, config);
   }
   return previousStep;
@@ -87,7 +60,7 @@ function getFormSteps<Step, State>(
   config: StepsConfig<Step, State>,
   formStepConfig: Step[]
 ): Step[] {
-  return formStepConfig.filter((step) => !config[step]?.skipWhen(state));
+  return formStepConfig.filter((step) => !config[step]?.skipWhen?.(state));
 }
 
 function getTotalStepCount<Step, State>(
@@ -130,24 +103,35 @@ export default class ReducerSteps<Step, State> {
   constructor(stepsConfig: StepsConfig<Step, State>, formStepConfig: Step[]) {
     this.stepsConfig = stepsConfig;
     this.formStepConfig = formStepConfig;
+    // Flow doesn't like re-assigning class methods,
+    // so I'll need these _functions to stick around.
+    this.getNextStep = this._getNextStepUnbound.bind(this);
+    this.getPreviousStep = this._getPreviousStepUnbound.bind(this);
+    this.getStepIndicator = this._getStepIndicatorUnbound.bind(this);
   }
 
-  getNextStep(state: StateWithSteps<Step, State>, step: Step): Step {
+  getNextStep: (state: StateWithSteps<Step, State>, step: Step) => Step;
+  _getNextStepUnbound(state: StateWithSteps<Step, State>, step: Step): Step {
     return getNextStep<Step, State>(state, step, this.stepsConfig);
   }
 
-  getPreviousStep(
+  getPreviousStep: (
+    state: StateWithSteps<Step, State>,
+    step: Step | null
+  ) => Step | null;
+  _getPreviousStepUnbound(
     state: StateWithSteps<Step, State>,
     step: Step | null
   ): Step | null {
     return getPreviousStep<Step, State>(state, step, this.stepsConfig);
   }
 
-  getStepIndicator = (state: StateWithSteps<Step, State>): string => {
+  getStepIndicator: (state: StateWithSteps<Step, State>) => string;
+  _getStepIndicatorUnbound(state: StateWithSteps<Step, State>): string {
     return getStepIndicator<Step, State>(
       state,
       this.stepsConfig,
       this.formStepConfig
     );
-  };
+  }
 }
