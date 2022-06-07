@@ -2,35 +2,42 @@
 
 type StateWithSteps<Step, State> = { ...State, currentStep: Step };
 
-export type StepConfig<Step, State> = {
-  next: Step,
-  previous: null | Step,
-  exclusion: (StateWithSteps<Step, State>) => boolean,
+type StepConfig<Step, State> = {
+  nextStep: Step,
+  previousStep: null | Step,
+  skipWhen: (StateWithSteps<Step, State>) => boolean,
 };
 
-type NextStep<Step, State> = $PropertyType<StepConfig<Step, State>, "next">;
+type NextStep<Step, State> = $PropertyType<StepConfig<Step, State>, "nextStep">;
 type PreviousStep<Step, State> = $PropertyType<
   StepConfig<Step, State>,
-  "previous"
+  "previousStep"
 >;
-type ExclusionCriteria<Step, State> = $PropertyType<
+type SkipCriteria<Step, State> = $PropertyType<
   StepConfig<Step, State>,
-  "exclusion"
+  "skipWhen"
 >;
 
-export type StepsConfig<Step, State> = {
+type StepsConfig<Step, State> = {
   [Step]: StepConfig<Step, State>,
 };
 
-export function configureStep<Step, State>(
-  next: NextStep<Step, State>,
-  previous: PreviousStep<Step, State> = null,
-  exclusion: ExclusionCriteria<Step, State> = () => false
+/**
+ *
+ * @param {*} nextStep The next step following this one.
+ * @param {*} previousStep The previous step before this one. Defaults to null.
+ * @param {*} skipWhen Accepts a state object and returns a boolean indicating whether this step should be skipped.
+ * @returns
+ */
+export function nextStepPreviousStepSkipWhen<Step, State>(
+  nextStep: NextStep<Step, State>,
+  previousStep: PreviousStep<Step, State> = null,
+  skipWhen: SkipCriteria<Step, State> = () => false
 ): StepConfig<Step, State> {
-  return { next, previous, exclusion };
+  return { nextStep, previousStep, skipWhen };
 }
 
-export function getNextStep<Step, State>(
+function getNextStep<Step, State>(
   state: StateWithSteps<Step, State>,
   step: Step,
   config: StepsConfig<Step, State>
@@ -39,16 +46,16 @@ export function getNextStep<Step, State>(
   if (!stepConfig) {
     return step;
   }
-  const nextStep = stepConfig.next;
+  const nextStep = stepConfig.nextStep;
   const nextStepConfig = config[nextStep];
-  if (nextStepConfig.exclusion(state)) {
+  if (nextStepConfig.skipWhen(state)) {
     return getNextStep(state, nextStep, config);
   }
 
   return nextStep;
 }
 
-export function getPreviousStep<Step, State>(
+function getPreviousStep<Step, State>(
   state: StateWithSteps<Step, State>,
   step: Step | null,
   config: StepsConfig<Step, State>
@@ -62,13 +69,13 @@ export function getPreviousStep<Step, State>(
     return step;
   }
 
-  const previousStep = currentStepConfig.previous;
+  const previousStep = currentStepConfig.previousStep;
   if (!previousStep) {
     return previousStep;
   }
   const previousStepConfig = config[previousStep];
-  if (previousStepConfig.exclusion(state)) {
-    return getPreviousStep(state, previousStepConfig.previous, config);
+  if (previousStepConfig.skipWhen(state)) {
+    return getPreviousStep(state, previousStepConfig.previousStep, config);
   }
   return previousStep;
 }
@@ -78,7 +85,7 @@ function getFormSteps<Step, State>(
   config: StepsConfig<Step, State>,
   formStepConfig: Step[]
 ): Step[] {
-  return formStepConfig.filter((step) => !config[step]?.exclusion(state));
+  return formStepConfig.filter((step) => !config[step]?.skipWhen(state));
 }
 
 function getTotalStepCount<Step, State>(
@@ -99,7 +106,7 @@ function getCurrentStepCount<Step, State>(
   );
 }
 
-export function getStepIndicator<Step, State>(
+function getStepIndicator<Step, State>(
   state: StateWithSteps<Step, State>,
   config: StepsConfig<Step, State>,
   formStepConfig: Step[]
@@ -113,4 +120,32 @@ export function getStepIndicator<Step, State>(
     config,
     formStepConfig
   )} of ${getTotalStepCount(state, config, formStepConfig)}`;
+}
+
+export default class ReducerSteps<Step, State> {
+  stepsConfig: StepsConfig<Step, State>;
+  formStepConfig: Step[];
+  constructor(stepsConfig: StepsConfig<Step, State>, formStepConfig: Step[]) {
+    this.stepsConfig = stepsConfig;
+    this.formStepConfig = formStepConfig;
+  }
+
+  getNextStep(state: StateWithSteps<Step, State>, step: Step): Step {
+    return getNextStep<Step, State>(state, step, this.stepsConfig);
+  }
+
+  getPreviousStep(
+    state: StateWithSteps<Step, State>,
+    step: Step | null
+  ): Step | null {
+    return getPreviousStep<Step, State>(state, step, this.stepsConfig);
+  }
+
+  getStepIndicator = (state: StateWithSteps<Step, State>): string => {
+    return getStepIndicator<Step, State>(
+      state,
+      this.stepsConfig,
+      this.formStepConfig
+    );
+  };
 }
