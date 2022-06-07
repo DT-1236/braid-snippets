@@ -23,6 +23,8 @@ type StepsConfig<Step, State> = {
 };
 
 /**
+ * A convenience method that configures a step. It will add default `null` value for the previous step
+ * and a default skip criterion that never skips the step.
  *
  * @param {*} nextStep The next step following this one.
  * @param {*} previousStep The previous step before this one. Defaults to null.
