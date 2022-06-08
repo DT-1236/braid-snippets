@@ -103,31 +103,26 @@ export default class ReducerSteps<Step, State> {
   constructor(stepsConfig: StepsConfig<Step, State>, formStepConfig: Step[]) {
     this.stepsConfig = stepsConfig;
     this.formStepConfig = formStepConfig;
-    // Flow doesn't like re-assigning class methods,
-    // so I'll need these _functions to stick around.
-    this.getNextStep = this._getNextStepUnbound.bind(this);
-    this.getPreviousStep = this._getPreviousStepUnbound.bind(this);
-    this.getStepIndicator = this._getStepIndicatorUnbound.bind(this);
+    // $FlowFixMe - these fields are definitely writeable - it's a common JS pattern
+    this.getNextStep = this.getNextStep.bind(this);
+    // $FlowFixMe - these fields are definitely writeable - it's a common JS pattern
+    this.getPreviousStep = this.getPreviousStep.bind(this);
+    // $FlowFixMe - these fields are definitely writeable - it's a common JS pattern
+    this.getStepIndicator = this.getStepIndicator.bind(this);
   }
 
-  getNextStep: (state: StateWithSteps<Step, State>, step: Step) => Step;
-  _getNextStepUnbound(state: StateWithSteps<Step, State>, step: Step): Step {
+  getNextStep(state: StateWithSteps<Step, State>, step: Step): Step {
     return getNextStep<Step, State>(state, step, this.stepsConfig);
   }
 
-  getPreviousStep: (
-    state: StateWithSteps<Step, State>,
-    step: Step | null
-  ) => Step | null;
-  _getPreviousStepUnbound(
+  getPreviousStep(
     state: StateWithSteps<Step, State>,
     step: Step | null
   ): Step | null {
     return getPreviousStep<Step, State>(state, step, this.stepsConfig);
   }
 
-  getStepIndicator: (state: StateWithSteps<Step, State>) => string;
-  _getStepIndicatorUnbound(state: StateWithSteps<Step, State>): string {
+  getStepIndicator(state: StateWithSteps<Step, State>): string {
     return getStepIndicator<Step, State>(
       state,
       this.stepsConfig,
