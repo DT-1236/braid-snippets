@@ -103,12 +103,6 @@ export default class ReducerSteps<Step, State> {
   constructor(stepsConfig: StepsConfig<Step, State>, formStepConfig: Step[]) {
     this.stepsConfig = stepsConfig;
     this.formStepConfig = formStepConfig;
-    // $FlowFixMe - these fields are definitely writeable - it's a common JS pattern
-    this.getNextStep = this.getNextStep.bind(this);
-    // $FlowFixMe - these fields are definitely writeable - it's a common JS pattern
-    this.getPreviousStep = this.getPreviousStep.bind(this);
-    // $FlowFixMe - these fields are definitely writeable - it's a common JS pattern
-    this.getStepIndicator = this.getStepIndicator.bind(this);
   }
 
   getNextStep(state: StateWithSteps<Step, State>, step: Step): Step {
