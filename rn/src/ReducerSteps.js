@@ -6,6 +6,7 @@ type StepConfig<Step, State> = {
   nextStep: Step,
   previousStep?: Step,
   skipWhen?: (StateWithSteps<Step, State>) => boolean,
+  canContinue?: (StateWithSteps<Step, State>) => boolean,
 };
 
 type StepsConfig<Step, State> = {
@@ -97,6 +98,13 @@ function getStepIndicator<Step, State>(
   )} of ${getTotalStepCount(state, config, formStepConfig)}`;
 }
 
+function getCanContinue<Step, State>(
+  state: StateWithSteps<Step, State>,
+  config: StepsConfig<Step, State>
+): boolean {
+  return config[state.currentStep].canContinue?.(state) ?? true;
+}
+
 export default class ReducerSteps<Step, State> {
   stepsConfig: StepsConfig<Step, State>;
   formStepConfig: Step[];
@@ -122,5 +130,9 @@ export default class ReducerSteps<Step, State> {
       this.stepsConfig,
       this.formStepConfig
     );
+  }
+
+  getCanContinue(state: StateWithSteps<Step, State>): boolean {
+    return getCanContinue<Step, State>(state, this.stepsConfig);
   }
 }
