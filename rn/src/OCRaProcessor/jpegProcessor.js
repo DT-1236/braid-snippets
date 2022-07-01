@@ -2,14 +2,20 @@
 import RNFetchBlob from "rn-fetch-blob";
 import { Buffer } from "buffer";
 import jpeg from "jpeg-js";
+import Bugsnag from "@bugsnag/browser";
 
 export async function getPathAndEncodedImageFromUrl(url: string) {
-  const response = await RNFetchBlob.config({ fileCache: true }).fetch(
-    "GET",
-    url
-  );
-  const base64 = await response.readFile("base64");
-  return [base64, response.path()];
+  try {
+    const response = await RNFetchBlob.config({ fileCache: true }).fetch(
+      "GET",
+      url
+    );
+    const base64 = await response.readFile("base64");
+    return [base64, response.path()];
+  } catch (ex) {
+    Bugsnag.notify(ex);
+    throw ex;
+  }
 }
 
 export function filterRedPixelData(jpegData: any) {
