@@ -2,7 +2,7 @@
 import RNFetchBlob from "rn-fetch-blob";
 import { Buffer } from "buffer";
 import jpeg from "jpeg-js";
-import Bugsnag from "@bugsnag/browser";
+import Bugsnag from "../Bugsnag";
 
 export async function getPathAndEncodedImageFromUrl(url: string) {
   try {
