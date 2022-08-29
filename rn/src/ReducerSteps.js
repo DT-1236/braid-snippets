@@ -1,5 +1,7 @@
 /** @flow */
 
+import Bugsnag from "./Bugsnag";
+
 export type StateWithSteps<Step, State> = { ...State, currentStep: Step };
 
 type StepConfig<Step, State> = {
@@ -117,11 +119,40 @@ export default class ReducerSteps<Step, State> {
     return getNextStep<Step, State>(state, step, this.stepsConfig);
   }
 
+  getNextStepState(state: StateWithSteps<Step, State>): State {
+    return {
+      ...state,
+      currentStep: getNextStep<Step, State>(
+        state,
+        state.currentStep,
+        this.stepsConfig
+      ),
+    };
+  }
+
   getPreviousStep(
     state: StateWithSteps<Step, State>,
     step: Step | null
   ): Step | null {
     return getPreviousStep<Step, State>(state, step, this.stepsConfig);
+  }
+
+  getPreviousStepState(state: StateWithSteps<Step, State>): State {
+    const previousStep = getPreviousStep(
+      state,
+      state.currentStep,
+      this.stepsConfig
+    );
+    if (!previousStep) {
+      Bugsnag.notify(
+        new Error(
+          "Previous step not found while trying to go to previous step: " +
+            JSON.stringify(state) +
+            "\nReturning on current step..."
+        )
+      );
+    }
+    return { ...state, currentStep: previousStep ?? state.currentStep };
   }
 
   getStepIndicator(state: StateWithSteps<Step, State>): string {
