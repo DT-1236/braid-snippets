@@ -4,12 +4,18 @@ import type { Step, State } from "./Types.flow";
 
 type StateParam = StateWithSteps<Step, State>;
 
-function amountValueIsValid({ amount, exceededLimit }: StateParam) {
+type Amount = $PropertyType<StateParam, "amount">;
+type ExceededLimit = $PropertyType<StateParam, "exceededLimit">;
+function amountIsValid(amount: Amount, exceededLimit: ExceededLimit) {
   return !!amount && !exceededLimit;
 }
 
-function editAmountValueIsValid(state: StateParam) {
-  return amountValueIsValid(state);
+function amountValueIsValid({ amount, exceededLimit }: StateParam) {
+  return amountIsValid(amount, exceededLimit);
+}
+
+function editAmountValueIsValid({ editAmount, exceededLimit }: StateParam) {
+  return amountIsValid(editAmount, exceededLimit);
 }
 
 function targetIsValid(state: StateParam) {
