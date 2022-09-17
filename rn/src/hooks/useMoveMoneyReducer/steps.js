@@ -23,7 +23,7 @@ function targetIsValid(state: StateParam) {
 }
 
 function editTargetIsValid(state: StateParam) {
-  return targetIsValid(state);
+  return !!state.editSelected;
 }
 
 export default new ReducerSteps<Step, State>(
