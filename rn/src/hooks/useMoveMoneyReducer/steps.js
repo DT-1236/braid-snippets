@@ -1,6 +1,6 @@
 /** @flow */
 import ReducerSteps, { type StateWithSteps } from "../../ReducerSteps";
-import type { Step, State } from "./Types.flow";
+import type { Step, State, Target, TargetType } from "./Types.flow";
 
 type StateParam = StateWithSteps<Step, State>;
 
@@ -18,12 +18,20 @@ function editAmountValueIsValid({ editAmount, exceededLimit }: StateParam) {
   return amountIsValid(editAmount, exceededLimit);
 }
 
-function targetIsValid(state: StateParam) {
-  return !!state.selected;
+function targetIsValid(target: Target, selectedTargetTypes: TargetType[]) {
+  return (
+    !!target &&
+    target.__typename &&
+    selectedTargetTypes.includes(target.__typename)
+  );
 }
 
-function editTargetIsValid(state: StateParam) {
-  return !!state.editSelected;
+function selectedTargetIsValid({ selected, selectedTargetTypes }: StateParam) {
+  return targetIsValid(selected, selectedTargetTypes);
+}
+
+function editTargetIsValid({ editSelected, selectedTargetTypes }: StateParam) {
+  return targetIsValid(editSelected, selectedTargetTypes);
 }
 
 export default new ReducerSteps<Step, State>(
@@ -35,7 +43,7 @@ export default new ReducerSteps<Step, State>(
     target: {
       nextStep: "confirm",
       previousStep: "amount",
-      canContinue: targetIsValid,
+      canContinue: selectedTargetIsValid,
     },
     confirm: { nextStep: "confirm" },
     edit_amount: { nextStep: "confirm", canContinue: editAmountValueIsValid },
