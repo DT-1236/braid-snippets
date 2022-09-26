@@ -1,6 +1,7 @@
 /** @flow */
 import ReducerSteps, { type StateWithSteps } from "../../ReducerSteps";
-import type { Step, State, Target, TargetType } from "./Types.flow";
+import type { Step, State, TargetType } from "./Types.flow";
+import type { TargetSelectItem } from "../../components/TargetSelection/Types.flow";
 
 type StateParam = StateWithSteps<Step, State>;
 
@@ -18,7 +19,10 @@ function editAmountValueIsValid({ editAmount, exceededLimit }: StateParam) {
   return amountIsValid(editAmount, exceededLimit);
 }
 
-function targetIsValid(target: Target, selectedTargetTypes: TargetType[]) {
+function targetIsValid(
+  target: TargetSelectItem | null,
+  selectedTargetTypes: TargetType[]
+) {
   return (
     !!target &&
     target.__typename &&
