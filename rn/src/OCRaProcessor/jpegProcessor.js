@@ -1,15 +1,14 @@
 /** @flow */
-import RNFetchBlob from "rn-fetch-blob";
+import ReactNativeBlobUtil from "react-native-blob-util";
 import { Buffer } from "buffer";
 import jpeg from "jpeg-js";
 import Bugsnag from "../Bugsnag";
 
 export async function getPathAndEncodedImageFromUrl(url: string) {
   try {
-    const response = await RNFetchBlob.config({ fileCache: true }).fetch(
-      "GET",
-      url
-    );
+    const response = await ReactNativeBlobUtil.config({
+      fileCache: true,
+    }).fetch("GET", url);
     const base64 = await response.readFile("base64");
     return [base64, response.path()];
   } catch (ex) {

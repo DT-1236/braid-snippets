@@ -9,7 +9,7 @@ import {
   CVV_COORDINATES,
 } from "../../ocrConfig";
 
-jest.mock("rn-fetch-blob", () => jest.fn());
+jest.mock("react-native-blob-util", () => jest.fn());
 // the global Buffer exists in jest-land
 jest.mock("buffer", () => ({ Buffer: global.Buffer }));
 
