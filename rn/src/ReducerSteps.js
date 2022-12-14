@@ -8,7 +8,8 @@ type StepConfig<Step, State> = {
   nextStep: Step,
   previousStep?: Step,
   skipWhen?: (StateWithSteps<Step, State>) => boolean,
-  partialStep?: boolean,
+  /** The step will not count towards the step total and has the same step count of the step in this value */
+  partialStepOf?: Step,
   canContinue?: (StateWithSteps<Step, State>) => boolean,
 };
 
@@ -91,8 +92,8 @@ function getStepIndicator<Step, State>(
 ): string {
   const formSteps = getFormSteps(state, config, formStepConfig);
   const { currentStep } = state;
-  const { partialStep } = config[currentStep];
-  if (!formSteps.includes(state.currentStep) && !partialStep) {
+  const { partialStepOf } = config[currentStep];
+  if (!formSteps.includes(state.currentStep) && !partialStepOf) {
     return "";
   }
 
@@ -102,26 +103,11 @@ function getStepIndicator<Step, State>(
     return "";
   }
 
-  const stepToCheck = partialStep
-    ? getPreviousStep(state, currentStep, config)
-    : currentStep;
-  if (!stepToCheck && partialStep) {
-    let stepString = "";
-    if (typeof currentStep === "string") {
-      stepString = currentStep;
-    } else if (typeof currentStep === "number") {
-      stepString = "" + currentStep;
-    }
-    console.warn(
-      `partialStep ${stepString} does not have a previousStep configured`
-    );
-  }
-
   return `${getCurrentStepCount(
     state,
     config,
     formStepConfig,
-    stepToCheck || currentStep
+    partialStepOf || currentStep
   )} of ${totalStepCount}`;
 }
 
