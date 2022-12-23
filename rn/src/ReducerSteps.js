@@ -29,6 +29,14 @@ function getNextStep<Step, State>(
   const nextStep = stepConfig.nextStep;
   const nextStepConfig = config[nextStep];
   if (nextStepConfig.skipWhen?.(state)) {
+    if (nextStepConfig.nextStep === nextStep) {
+      Bugsnag.notify(
+        new Error(
+          `Terminal step ${(nextStep: any)} was skipped. Terminal steps should be unskippable.`
+        )
+      );
+      return step;
+    }
     return getNextStep(state, nextStep, config);
   }
 
