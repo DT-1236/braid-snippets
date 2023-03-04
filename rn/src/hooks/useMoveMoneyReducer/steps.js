@@ -47,7 +47,8 @@ export default new ReducerSteps<Step, State>(
     target: {
       nextStep: "confirm",
       previousStep: "amount",
-      skipWhen: ({ allowUserSelection }) => !allowUserSelection,
+      skipWhen: ({ allowUserSelection, awaitingCompletion }) =>
+        !allowUserSelection && !awaitingCompletion,
       canContinue: selectedTargetIsValid,
     },
     confirm: { nextStep: "confirm" },
