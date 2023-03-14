@@ -4,7 +4,7 @@ A way for us to query the backend and populate the headers for the response appr
 
 ## Testing
 
-The url to test must have its domain replaced with your `ngrok http 3000` domain. Both `yarn web:dev` and `yarn web:ssr-dev` must be running in addition to your java backend. There should be no need to use ngrok for your java backend
+The url to test must have its domain replaced with your `ngrok http 3000` domain. Both `yarn web:dev` and `yarn web:ssr-dev` must be running in addition to your java backend. There should be no need to use ngrok for your java backend when testing locally. However, the `ngrok http 8080` domain must be placed in `config.js` when testing with other people (_eg_ - `return "https://************.ngrok.app/"`).
 
 The template for headers is `web/templates/index.ejs`
 
