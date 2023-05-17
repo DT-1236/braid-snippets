@@ -1,27 +1,40 @@
-
 interface StepEnum {
-  [value: string]: string
-} 
-export interface StateWithSteps<Steps extends StepEnum> { currentStep: keyof Steps };
-
-interface StepPredicate<ReducerSteps extends StepEnum, ReducerState extends StateWithSteps<ReducerSteps>> {
-  (state: ReducerState): boolean
+  [value: string]: string;
+}
+export interface StateWithSteps<Steps extends StepEnum> {
+  currentStep: keyof Steps;
 }
 
-interface StepConfig<ReducerSteps extends StepEnum, ReducerState extends StateWithSteps<ReducerSteps>> {
-  nextStep: keyof StepEnum,
-  previousStep?: keyof StepEnum,
-  skipWhen?: StepPredicate<ReducerSteps, ReducerState>,
+interface StepPredicate<
+  ReducerSteps extends StepEnum,
+  ReducerState extends StateWithSteps<ReducerSteps>
+> {
+  (state: ReducerState): boolean;
+}
+
+interface StepConfig<
+  ReducerSteps extends StepEnum,
+  ReducerState extends StateWithSteps<ReducerSteps>
+> {
+  nextStep: keyof StepEnum;
+  previousStep?: keyof StepEnum;
+  skipWhen?: StepPredicate<ReducerSteps, ReducerState>;
   /** The step will not count towards the step total and has the same step count of the step in this value */
-  partialStepOf?: keyof StepEnum,
-  canContinue?: StepPredicate<ReducerSteps, ReducerState>,
+  partialStepOf?: keyof StepEnum;
+  canContinue?: StepPredicate<ReducerSteps, ReducerState>;
+}
+
+type StepsConfig<
+  ReducerSteps extends StepEnum,
+  ReducerState extends StateWithSteps<ReducerSteps>
+> = {
+  [Property in keyof ReducerSteps]: StepConfig<ReducerSteps, ReducerState>;
 };
 
-type StepsConfig<ReducerSteps extends StepEnum, ReducerState extends StateWithSteps<ReducerSteps>> = {
-  [Property in keyof ReducerSteps]: StepConfig<ReducerSteps, ReducerState>
-};
-
-function getNextStep<ReducerSteps extends StepEnum, ReducerState extends StateWithSteps<ReducerSteps>>(
+function getNextStep<
+  ReducerSteps extends StepEnum,
+  ReducerState extends StateWithSteps<ReducerSteps>
+>(
   state: ReducerState,
   step: keyof ReducerSteps,
   config: StepsConfig<ReducerSteps, ReducerState>
@@ -35,7 +48,7 @@ function getNextStep<ReducerSteps extends StepEnum, ReducerState extends StateWi
   if (nextStepConfig.skipWhen?.(state)) {
     if (nextStepConfig.nextStep === nextStep) {
       console.warn(
-          `Terminal step ${(nextStep)} was skipped. Terminal steps should be unskippable.`        
+        `Terminal step ${nextStep} was skipped. Terminal steps should be unskippable.`
       );
       return step;
     }
@@ -45,9 +58,12 @@ function getNextStep<ReducerSteps extends StepEnum, ReducerState extends StateWi
   return nextStep;
 }
 
-function getPreviousStep<ReducerSteps extends StepEnum, ReducerState extends StateWithSteps<ReducerSteps>>(
+function getPreviousStep<
+  ReducerSteps extends StepEnum,
+  ReducerState extends StateWithSteps<ReducerSteps>
+>(
   state: ReducerState,
-  step: (keyof ReducerSteps | null | undefined),
+  step: keyof ReducerSteps | null | undefined,
   config: StepsConfig<ReducerSteps, ReducerState>
 ): keyof ReducerSteps | null {
   if (!step) {
@@ -70,7 +86,10 @@ function getPreviousStep<ReducerSteps extends StepEnum, ReducerState extends Sta
   return previousStep;
 }
 
-function getFormSteps<ReducerSteps extends StepEnum, ReducerState extends StateWithSteps<ReducerSteps>>(
+function getFormSteps<
+  ReducerSteps extends StepEnum,
+  ReducerState extends StateWithSteps<ReducerSteps>
+>(
   state: ReducerState,
   config: StepsConfig<ReducerSteps, ReducerState>,
   formStepConfig: (keyof ReducerSteps)[]
@@ -78,7 +97,10 @@ function getFormSteps<ReducerSteps extends StepEnum, ReducerState extends StateW
   return formStepConfig.filter((step) => !config[step]?.skipWhen?.(state));
 }
 
-function getTotalStepCount<ReducerSteps extends StepEnum, ReducerState extends StateWithSteps<ReducerSteps>>(
+function getTotalStepCount<
+  ReducerSteps extends StepEnum,
+  ReducerState extends StateWithSteps<ReducerSteps>
+>(
   state: ReducerState,
   config: StepsConfig<ReducerSteps, ReducerState>,
   formStepConfig: (keyof ReducerSteps)[]
@@ -86,7 +108,10 @@ function getTotalStepCount<ReducerSteps extends StepEnum, ReducerState extends S
   return getFormSteps(state, config, formStepConfig).length;
 }
 
-function getCurrentStepCount<ReducerSteps extends StepEnum, ReducerState extends StateWithSteps<ReducerSteps>>(
+function getCurrentStepCount<
+  ReducerSteps extends StepEnum,
+  ReducerState extends StateWithSteps<ReducerSteps>
+>(
   state: ReducerState,
   config: StepsConfig<ReducerSteps, ReducerState>,
   formStepConfig: (keyof ReducerSteps)[],
@@ -95,7 +120,10 @@ function getCurrentStepCount<ReducerSteps extends StepEnum, ReducerState extends
   return getFormSteps(state, config, formStepConfig).indexOf(stepToCheck) + 1;
 }
 
-function getStepIndicator<ReducerSteps extends StepEnum, ReducerState extends StateWithSteps<ReducerSteps>>(
+function getStepIndicator<
+  ReducerSteps extends StepEnum,
+  ReducerState extends StateWithSteps<ReducerSteps>
+>(
   state: ReducerState,
   config: StepsConfig<ReducerSteps, ReducerState>,
   formStepConfig: (keyof ReducerSteps)[]
@@ -121,23 +149,39 @@ function getStepIndicator<ReducerSteps extends StepEnum, ReducerState extends St
   )} of ${totalStepCount}`;
 }
 
-function getCanContinue<ReducerSteps extends StepEnum, ReducerState extends StateWithSteps<ReducerSteps>>(
+function getCanContinue<
+  ReducerSteps extends StepEnum,
+  ReducerState extends StateWithSteps<ReducerSteps>
+>(
   state: ReducerState,
   config: StepsConfig<ReducerSteps, ReducerState>
 ): boolean {
   return config[state.currentStep].canContinue?.(state) ?? true;
 }
 
-export default class ReducerSteps<ReducerSteps extends StepEnum, ReducerState extends StateWithSteps<ReducerSteps>> {
+export default class ReducerSteps<
+  ReducerSteps extends StepEnum,
+  ReducerState extends StateWithSteps<ReducerSteps>
+> {
   stepsConfig: StepsConfig<ReducerSteps, ReducerState>;
   formStepConfig: (keyof ReducerSteps)[];
-  constructor(stepsConfig: StepsConfig<ReducerSteps, ReducerState>, formStepConfig: (keyof ReducerSteps)[]) {
+  constructor(
+    stepsConfig: StepsConfig<ReducerSteps, ReducerState>,
+    formStepConfig: (keyof ReducerSteps)[]
+  ) {
     this.stepsConfig = stepsConfig;
     this.formStepConfig = formStepConfig;
   }
 
-  getNextStep(state: ReducerState, step: keyof ReducerSteps): keyof ReducerSteps {
-    return getNextStep<ReducerSteps, ReducerState>(state, step, this.stepsConfig);
+  getNextStep(
+    state: ReducerState,
+    step: keyof ReducerSteps
+  ): keyof ReducerSteps {
+    return getNextStep<ReducerSteps, ReducerState>(
+      state,
+      step,
+      this.stepsConfig
+    );
   }
 
   getNextStepState(state: ReducerState): ReducerState {
@@ -155,7 +199,11 @@ export default class ReducerSteps<ReducerSteps extends StepEnum, ReducerState ex
     state: ReducerState,
     step: keyof ReducerSteps | null
   ): keyof ReducerSteps | null {
-    return getPreviousStep<ReducerSteps, ReducerState>(state, step, this.stepsConfig);
+    return getPreviousStep<ReducerSteps, ReducerState>(
+      state,
+      step,
+      this.stepsConfig
+    );
   }
 
   getPreviousStepState(state: ReducerState): ReducerState {
@@ -166,10 +214,10 @@ export default class ReducerSteps<ReducerSteps extends StepEnum, ReducerState ex
     );
     if (!previousStep) {
       console.warn(
-          "Previous step not found while trying to go to previous step: " +
-            JSON.stringify(state) +
-            "\nReturning on current step..."
-        );
+        "Previous step not found while trying to go to previous step: " +
+          JSON.stringify(state) +
+          "\nReturning on current step..."
+      );
     }
     return { ...state, currentStep: previousStep ?? state.currentStep };
   }
