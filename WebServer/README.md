@@ -10,3 +10,7 @@ The template for headers is `web/templates/index.ejs`
 
 Twitter cards can be validated at https://cards-dev.twitter.com/validator
 https://metatags.io/ was used as a reference for meta tags
+
+## Sample
+
+The shown sample is merely one of the many routes worked on throughout my tenure at Braid. It does not have full commit history as that would amount to including the entire file.
